@@ -100,6 +100,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $jobType
         );
 
+        if ($insertJob->execute()) {
+
+            $success = "Job listing posted successfully!";
+
+            $employerId = "";
+            $jobTitle = "";
+            $jobDescription = "";
+            $jobRequirements = "";
+            $location = "";
+            $salaryMin = "";
+            $salaryMax = "";
+            $jobType = "";
+
+        } else {
+
+            $error = "Unable to post the job listing.";
+        }
+
         $insertJob->close();
     }
 }

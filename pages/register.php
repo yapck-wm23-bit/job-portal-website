@@ -114,7 +114,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 // Save both database changes
                 $conn->commit();
 
-                
+                $success = "Registration successful!";
 
                 // Clear form values after successful registration
                 $fullName = "";
@@ -129,7 +129,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 // Cancel all changes if an error occurs
                 $conn->rollback();
 
-                
+                $error = "Registration failed. Please try again.";
             }
         }
 

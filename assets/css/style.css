@@ -180,3 +180,25 @@ h1 {
 .apply-button:hover {
     background: #1d4ed8;
 }
+
+/* Employer applicant page */
+.applicants-container {
+    width: 90%;
+    max-width: 1000px;
+    margin: 40px auto;
+}
+
+.applicant-filter-form {
+    background: white;
+    padding: 25px;
+    margin: 25px 0;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.applicant-placeholder {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}

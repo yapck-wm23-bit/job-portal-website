@@ -97,6 +97,7 @@ declare(strict_types=1);
             color: #666;
         }
     </style>
+    
 </head>
 
 <body>

@@ -298,3 +298,60 @@ h1 {
     color: #666;
     font-style: italic;
 }
+
+/* Resume upload page */
+.resume-upload-container {
+    width: 90%;
+    max-width: 750px;
+    margin: 40px auto;
+}
+
+.resume-upload-form {
+    background: white;
+    padding: 25px;
+    margin-top: 25px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.resume-upload-form input[type="file"] {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: white;
+    box-sizing: border-box;
+}
+
+.form-help {
+    display: block;
+    margin-top: 8px;
+    color: #666;
+}
+
+.resume-information {
+    margin: 20px 0;
+    padding: 15px 20px;
+    background: #f5f7fa;
+    border-left: 4px solid #2563eb;
+    border-radius: 4px;
+}
+
+.resume-information h2 {
+    margin-top: 0;
+    font-size: 18px;
+}
+
+.resume-information ul {
+    margin-bottom: 0;
+    padding-left: 20px;
+}
+
+.development-note {
+    margin-top: 12px;
+    color: #666;
+    font-size: 14px;
+    font-style: italic;
+}

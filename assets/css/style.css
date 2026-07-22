@@ -1,3 +1,22 @@
+.job-search-container {
+    width: 90%;
+    max-width: 1000px;
+    margin: 40px auto;
+}
+
+.search-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.search-form input {
+    flex: 1;
+    padding: 12px;
+    font-size: 16px;
+}
+
+.search-form button {
 /* For post job form */
 body {
     font-family: Arial, sans-serif;
@@ -41,6 +60,32 @@ h1 {
     cursor: pointer;
 }
 
+.job-results {
+    margin-top: 20px;
+}
+
+.job-card {
+    background: white;
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.job-card h2 {
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.job-card h3 {
+    margin-top: 0;
+    font-weight: normal;
+}
+
+.no-results {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+}
 .error-message {
     padding: 12px;
     margin-bottom: 20px;
@@ -51,4 +96,6 @@ h1 {
     padding: 12px;
     margin-bottom: 20px;
     background: #e5ffe8;
+}
+
 }

@@ -1,0 +1,50 @@
+name: Nightly PHP Build
+
+on:
+  push:
+
+  pull_request:
+    branches:
+      - main
+      - develop
+
+  schedule:
+    # GitHub cron uses UTC.
+    # 16:30 UTC = 12:30 AM Malaysia time.
+    - cron: "30 16 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  php-syntax-check:
+    name: PHP Syntax Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          coverage: none
+
+      - name: Display PHP version
+        run: php --version
+
+      - name: Check PHP file syntax
+        shell: bash
+        run: |
+          set -e
+
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            php -l "$file"
+          done < <(
+            find . -type f -name "*.php" \
+              -not -path "./vendor/*" \
+              -print0
+          )
+
+          echo "All PHP files passed the syntax check."

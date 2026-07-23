@@ -107,35 +107,63 @@ if (
         if ($jobSeekerResult->num_rows === 0) {
             $error = "The selected Job Seeker profile was not found.";
         } else {
-            try {
-                $status = "Pending";
+            // Check whether this Job Seeker has already applied
+            $duplicateQuery = $conn->prepare(
+                "SELECT application_id
+                FROM applications
+                WHERE job_id = ?
+                AND job_seeker_id = ?"
+            );
 
-                $insertApplication = $conn->prepare(
-                    "INSERT INTO applications
-                    (
-                        job_id,
-                        job_seeker_id,
-                        status
-                    )
-                    VALUES (?, ?, ?)"
-                );
+            $duplicateQuery->bind_param(
+                "ii",
+                $jobId,
+                $jobSeekerId
+            );
 
-                $insertApplication->bind_param(
-                    "iis",
-                    $jobId,
-                    $jobSeekerId,
-                    $status
-                );
+            $duplicateQuery->execute();
 
-                $insertApplication->execute();
-                $insertApplication->close();
+            $duplicateResult = $duplicateQuery->get_result();
 
-                $success = "Application submitted successfully.";
-                $selectedJobSeekerId = 0;
+            if ($duplicateResult->num_rows > 0) {
 
-            } catch (mysqli_sql_exception $exception) {
-                $error = "The application could not be submitted.";
+                $error = "You have already applied for this job.";
+
+            } else {
+
+                try {
+                    $status = "Pending";
+
+                    $insertApplication = $conn->prepare(
+                        "INSERT INTO applications
+                        (
+                            job_id,
+                            job_seeker_id,
+                            status
+                        )
+                        VALUES (?, ?, ?)"
+                    );
+
+                    $insertApplication->bind_param(
+                        "iis",
+                        $jobId,
+                        $jobSeekerId,
+                        $status
+                    );
+
+                    $insertApplication->execute();
+                    $insertApplication->close();
+
+                    $success = "Application submitted successfully.";
+                    $selectedJobSeekerId = 0;
+
+                } catch (mysqli_sql_exception $exception) {
+
+                    $error = "The application could not be submitted. Please try again.";
+                }
             }
+
+            $duplicateQuery->close();
         }
 
         $jobSeekerQuery->close();

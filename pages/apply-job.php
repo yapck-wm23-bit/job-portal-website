@@ -1,18 +1,34 @@
 <?php
 
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
 require_once __DIR__ . "/../config/database.php";
 
 $job = null;
 $jobSeekers = [];
 $error = "";
+$success = "";
+$selectedJobSeekerId = 0;
 
-// Get the selected job ID from the URL
-$jobId = filter_input(INPUT_GET, "job_id", FILTER_VALIDATE_INT);
+// Get job ID from either the form or the URL
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $jobId = filter_input(
+        INPUT_POST,
+        "job_id",
+        FILTER_VALIDATE_INT
+    );
+} else {
+    $jobId = filter_input(
+        INPUT_GET,
+        "job_id",
+        FILTER_VALIDATE_INT
+    );
+}
 
+// Retrieve selected job
 if (!$jobId) {
     $error = "Please select a valid job listing.";
 } else {
-    // Retrieve the selected job
     $jobQuery = $conn->prepare(
         "SELECT
             jobs.job_id,
@@ -43,7 +59,7 @@ if (!$jobId) {
     }
 }
 
-// Retrieve available Job Seeker profiles
+// Retrieve Job Seeker profiles
 $jobSeekerResult = $conn->query(
     "SELECT
         job_seeker_id,
@@ -52,9 +68,77 @@ $jobSeekerResult = $conn->query(
      ORDER BY full_name ASC"
 );
 
-if ($jobSeekerResult) {
-    while ($row = $jobSeekerResult->fetch_assoc()) {
-        $jobSeekers[] = $row;
+while ($row = $jobSeekerResult->fetch_assoc()) {
+    $jobSeekers[] = $row;
+}
+
+// Process the application form
+if (
+    $_SERVER["REQUEST_METHOD"] === "POST" &&
+    $job !== null
+) {
+    $jobSeekerId = filter_input(
+        INPUT_POST,
+        "job_seeker_id",
+        FILTER_VALIDATE_INT
+    );
+
+    $selectedJobSeekerId = (int) $jobSeekerId;
+
+    if (!$jobSeekerId) {
+        $error = "Please select a valid Job Seeker profile.";
+    } else {
+        // Confirm that the Job Seeker exists
+        $jobSeekerQuery = $conn->prepare(
+            "SELECT job_seeker_id
+             FROM job_seekers
+             WHERE job_seeker_id = ?"
+        );
+
+        $jobSeekerQuery->bind_param(
+            "i",
+            $jobSeekerId
+        );
+
+        $jobSeekerQuery->execute();
+
+        $jobSeekerResult = $jobSeekerQuery->get_result();
+
+        if ($jobSeekerResult->num_rows === 0) {
+            $error = "The selected Job Seeker profile was not found.";
+        } else {
+            try {
+                $status = "Pending";
+
+                $insertApplication = $conn->prepare(
+                    "INSERT INTO applications
+                    (
+                        job_id,
+                        job_seeker_id,
+                        status
+                    )
+                    VALUES (?, ?, ?)"
+                );
+
+                $insertApplication->bind_param(
+                    "iis",
+                    $jobId,
+                    $jobSeekerId,
+                    $status
+                );
+
+                $insertApplication->execute();
+                $insertApplication->close();
+
+                $success = "Application submitted successfully.";
+                $selectedJobSeekerId = 0;
+
+            } catch (mysqli_sql_exception $exception) {
+                $error = "The application could not be submitted.";
+            }
+        }
+
+        $jobSeekerQuery->close();
     }
 }
 
@@ -93,6 +177,14 @@ if ($jobSeekerResult) {
             Review the job information and select your Job Seeker
             profile.
         </p>
+
+        <?php if ($success !== ""): ?>
+
+            <div class="success-message">
+                <?= htmlspecialchars($success) ?>
+            </div>
+
+        <?php endif; ?>
 
         <?php if ($error !== ""): ?>
 
@@ -195,13 +287,15 @@ if ($jobSeekerResult) {
                         <?php foreach ($jobSeekers as $jobSeeker): ?>
 
                             <option
-                                value="<?=
+                                value="<?= (int) $jobSeeker["job_seeker_id"] ?>"
+                                <?php if (
+                                    $selectedJobSeekerId ===
                                     (int) $jobSeeker["job_seeker_id"]
-                                ?>"
+                                ): ?>
+                                    selected
+                                <?php endif; ?>
                             >
-                                <?= htmlspecialchars(
-                                    $jobSeeker["full_name"]
-                                ) ?>
+                                <?= htmlspecialchars($jobSeeker["full_name"]) ?>
                             </option>
 
                         <?php endforeach; ?>
@@ -212,17 +306,9 @@ if ($jobSeekerResult) {
                 <button
                     type="submit"
                     class="register-button"
-                    disabled
                 >
                     Submit Application
                 </button>
-
-                <p>
-                    <small>
-                        Application submission will be enabled after
-                        the database processing is implemented.
-                    </small>
-                </p>
 
             </form>
 

@@ -9,6 +9,41 @@ $applicants = [];
 $error = "";
 $selectedJobTitle = "";
 
+function getResumeLink(?string $resumePath): ?string
+{
+    if (empty($resumePath)) {
+        return null;
+    }
+
+    // Only use the file name to prevent unsafe paths
+    $fileName = basename($resumePath);
+
+    $filePath = __DIR__
+        . "/../uploads/resumes/"
+        . $fileName;
+
+    if (!is_file($filePath)) {
+        return null;
+    }
+
+    return "../uploads/resumes/"
+        . rawurlencode($fileName);
+}
+
+$resumeColumnAvailable = false;
+
+// Check whether JPW-7 has added the resume_path column
+$resumeColumnResult = $conn->query(
+    "SHOW COLUMNS FROM job_seekers LIKE 'resume_path'"
+);
+
+if (
+    $resumeColumnResult &&
+    $resumeColumnResult->num_rows > 0
+) {
+    $resumeColumnAvailable = true;
+}
+
 $selectedEmployerId = filter_input(
     INPUT_GET,
     "employer_id",
@@ -87,33 +122,40 @@ if ($selectedEmployerId && $selectedJobId) {
 
     $selectedJobQuery->close();
 
+    $resumeSelect = $resumeColumnAvailable
+    ? ", job_seekers.resume_path"
+    : ", NULL AS resume_path";
+
     if (!$selectedJob) {
         $error = "The selected job does not belong to this employer.";
     } else {
         $selectedJobTitle = $selectedJob["job_title"];
 
         // Retrieve applicants for selected job
-        $applicantQuery = $conn->prepare(
-        "SELECT
-            applications.application_id,
-            applications.status,
-            applications.applied_at,
-            job_seekers.job_seeker_id,
-            job_seekers.full_name,
-            job_seekers.phone,
-            job_seekers.skills,
-            job_seekers.education,
-            job_seekers.experience_summary,
-            users.email
-        FROM applications
-        INNER JOIN job_seekers
-            ON applications.job_seeker_id =
-            job_seekers.job_seeker_id
-        INNER JOIN users
-            ON job_seekers.user_id = users.user_id
-        WHERE applications.job_id = ?
-        ORDER BY applications.applied_at DESC"
-    );
+        $applicantSql = "
+            SELECT
+                applications.application_id,
+                applications.status,
+                applications.applied_at,
+                job_seekers.job_seeker_id,
+                job_seekers.full_name,
+                job_seekers.phone,
+                job_seekers.skills,
+                job_seekers.education,
+                job_seekers.experience_summary,
+                users.email
+                $resumeSelect
+            FROM applications
+            INNER JOIN job_seekers
+                ON applications.job_seeker_id =
+                job_seekers.job_seeker_id
+            INNER JOIN users
+                ON job_seekers.user_id = users.user_id
+            WHERE applications.job_id = ?
+            ORDER BY applications.applied_at DESC
+        ";
+
+        $applicantQuery = $conn->prepare($applicantSql);
 
         $applicantQuery->bind_param(
             "i",
@@ -417,6 +459,57 @@ if ($selectedEmployerId && $selectedJobId) {
                                     )
                                 ) ?>
                             </p>
+
+                            <?php
+                                $resumeLink = getResumeLink(
+                                    $applicant["resume_path"] ?? null
+                                );
+                                ?>
+
+                                <div class="resume-section">
+
+                                    <strong>Résumé:</strong>
+
+                                    <?php if ($resumeLink !== null): ?>
+
+                                        <div class="resume-actions">
+
+                                            <a
+                                                href="<?= htmlspecialchars(
+                                                    $resumeLink,
+                                                    ENT_QUOTES,
+                                                    "UTF-8"
+                                                ) ?>"
+                                                class="resume-button"
+                                                target="_blank"
+                                                rel="noopener"
+                                            >
+                                                View Résumé
+                                            </a>
+
+                                            <a
+                                                href="<?= htmlspecialchars(
+                                                    $resumeLink,
+                                                    ENT_QUOTES,
+                                                    "UTF-8"
+                                                ) ?>"
+                                                class="resume-button secondary-button"
+                                                download
+                                            >
+                                                Download Résumé
+                                            </a>
+
+                                        </div>
+
+                                    <?php else: ?>
+
+                                        <span class="resume-unavailable">
+                                            No résumé uploaded
+                                        </span>
+
+                                    <?php endif; ?>
+
+                                </div>
 
                         </article>
 

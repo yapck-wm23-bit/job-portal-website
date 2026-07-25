@@ -132,6 +132,20 @@ declare(strict_types=1);
         </div>
 
         <div class="feature-card">
+
+            <h3>Company Profile</h3>
+
+            <p>
+                Employers can create and manage their company profiles.
+            </p>
+
+            <a href="pages/company-profile.php">
+                View Company Profile
+            </a>
+
+        </div>
+
+        <div class="feature-card">
             <h3>Post a Job</h3>
 
             <p>
@@ -155,6 +169,21 @@ declare(strict_types=1);
             <a href="pages/job-search.php">
                 Search Jobs
             </a>
+        </div>
+
+        <div class="feature-card">
+
+            <h3>View Applicants</h3>
+
+            <p>
+                Employers can view the Job Seekers who applied for
+                their job postings.
+            </p>
+
+            <a href="pages/view-applicants.php">
+                View Applicants
+            </a>
+
         </div>
     </section>
 

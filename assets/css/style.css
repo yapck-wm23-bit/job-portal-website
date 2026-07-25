@@ -255,3 +255,46 @@ h1 {
     background: #ffe5e5;
     color: #a10000;
 }
+
+/* Applicant resume section */
+.resume-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+.resume-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.resume-button {
+    display: inline-block;
+    padding: 9px 16px;
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.resume-button:hover {
+    background: #1d4ed8;
+}
+
+.secondary-button {
+    background: #4b5563;
+}
+
+.secondary-button:hover {
+    background: #374151;
+}
+
+.resume-unavailable {
+    display: block;
+    margin-top: 8px;
+    color: #666;
+    font-style: italic;
+}

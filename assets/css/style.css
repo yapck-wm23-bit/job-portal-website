@@ -224,3 +224,34 @@ h1 {
 .applicant-card p {
     line-height: 1.5;
 }
+
+/* Applicant summary */
+.applicant-count {
+    margin-bottom: 20px;
+    color: #555;
+    font-weight: bold;
+}
+
+/* Application status badge */
+.status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.status-pending {
+    background: #fff4cc;
+    color: #7a5d00;
+}
+
+.status-shortlisted {
+    background: #e5ffe8;
+    color: #176b23;
+}
+
+.status-rejected {
+    background: #ffe5e5;
+    color: #a10000;
+}

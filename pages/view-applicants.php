@@ -94,23 +94,26 @@ if ($selectedEmployerId && $selectedJobId) {
 
         // Retrieve applicants for selected job
         $applicantQuery = $conn->prepare(
-            "SELECT
-                applications.application_id,
-                applications.status,
-                applications.applied_at,
-                job_seekers.job_seeker_id,
-                job_seekers.full_name,
-                job_seekers.phone,
-                job_seekers.skills,
-                job_seekers.education,
-                job_seekers.experience_summary
-             FROM applications
-             INNER JOIN job_seekers
-                ON applications.job_seeker_id =
-                   job_seekers.job_seeker_id
-             WHERE applications.job_id = ?
-             ORDER BY applications.applied_at DESC"
-        );
+        "SELECT
+            applications.application_id,
+            applications.status,
+            applications.applied_at,
+            job_seekers.job_seeker_id,
+            job_seekers.full_name,
+            job_seekers.phone,
+            job_seekers.skills,
+            job_seekers.education,
+            job_seekers.experience_summary,
+            users.email
+        FROM applications
+        INNER JOIN job_seekers
+            ON applications.job_seeker_id =
+            job_seekers.job_seeker_id
+        INNER JOIN users
+            ON job_seekers.user_id = users.user_id
+        WHERE applications.job_id = ?
+        ORDER BY applications.applied_at DESC"
+    );
 
         $applicantQuery->bind_param(
             "i",
@@ -270,6 +273,21 @@ if ($selectedEmployerId && $selectedJobId) {
 
         </form>
 
+                <?php if (
+            $selectedEmployerId &&
+            count($jobs) === 0
+        ): ?>
+
+            <div class="no-results">
+
+                <p>
+                    No job postings were found for this Employer.
+                </p>
+
+            </div>
+
+        <?php endif; ?>
+
         <?php if (
             $selectedEmployerId &&
             $selectedJobId &&
@@ -282,6 +300,20 @@ if ($selectedEmployerId && $selectedJobId) {
                     Applicants for:
                     <?= htmlspecialchars($selectedJobTitle) ?>
                 </h2>
+
+                <p class="applicant-count">
+
+                    <?php if (count($applicants) === 1): ?>
+
+                        1 applicant found.
+
+                    <?php else: ?>
+
+                        <?= count($applicants) ?> applicants found.
+
+                    <?php endif; ?>
+
+                </p>
 
                 <?php if (count($applicants) > 0): ?>
 
@@ -296,22 +328,46 @@ if ($selectedEmployerId && $selectedJobId) {
                             </h3>
 
                             <p>
+                                <strong>Email:</strong>
+
+                                <?= htmlspecialchars(
+                                    $applicant["email"]
+                                ) ?>
+                            </p>
+
+                            <p>
                                 <strong>Phone:</strong>
 
                                 <?= htmlspecialchars(
-                                    $applicant["phone"] !== ""
+                                    !empty($applicant["phone"])
                                         ? $applicant["phone"]
                                         : "Not provided"
                                 ) ?>
                             </p>
 
-                            <p>
-                                <strong>Status:</strong>
+                            <?php
+                                $statusClass = strtolower(
+                                    preg_replace(
+                                        "/[^a-zA-Z]/",
+                                        "",
+                                        $applicant["status"]
+                                    )
+                                );
+                                ?>
 
-                                <?= htmlspecialchars(
-                                    $applicant["status"]
-                                ) ?>
-                            </p>
+                                <p>
+                                    <strong>Status:</strong>
+
+                                    <span
+                                        class="status-badge status-<?= htmlspecialchars(
+                                            $statusClass
+                                        ) ?>"
+                                    >
+                                        <?= htmlspecialchars(
+                                            $applicant["status"]
+                                        ) ?>
+                                    </span>
+                                </p>
 
                             <p>
                                 <strong>Applied on:</strong>
@@ -329,7 +385,7 @@ if ($selectedEmployerId && $selectedJobId) {
 
                                 <?= nl2br(
                                     htmlspecialchars(
-                                        $applicant["skills"] !== ""
+                                        !empty($applicant["skills"])
                                             ? $applicant["skills"]
                                             : "Not provided"
                                     )
@@ -341,7 +397,7 @@ if ($selectedEmployerId && $selectedJobId) {
 
                                 <?= nl2br(
                                     htmlspecialchars(
-                                        $applicant["education"] !== ""
+                                        !empty($applicant["education"])
                                             ? $applicant["education"]
                                             : "Not provided"
                                     )
@@ -353,12 +409,10 @@ if ($selectedEmployerId && $selectedJobId) {
 
                                 <?= nl2br(
                                     htmlspecialchars(
-                                        $applicant[
-                                            "experience_summary"
-                                        ] !== ""
-                                            ? $applicant[
-                                                "experience_summary"
-                                            ]
+                                        !empty(
+                                            $applicant["experience_summary"]
+                                        )
+                                            ? $applicant["experience_summary"]
                                             : "Not provided"
                                     )
                                 ) ?>

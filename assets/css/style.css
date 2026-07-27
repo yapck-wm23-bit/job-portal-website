@@ -355,3 +355,24 @@ h1 {
     font-size: 14px;
     font-style: italic;
 }
+
+/* Current resume information */
+.current-resume-panel {
+    margin: 20px 0;
+    padding: 18px;
+    background: #f8fafc;
+    border: 1px solid #dbe3ec;
+    border-radius: 6px;
+}
+
+.current-resume-panel h2 {
+    margin-top: 0;
+    font-size: 18px;
+}
+
+.replacement-warning {
+    margin-top: 12px;
+    color: #7a5d00;
+    font-size: 14px;
+    font-weight: bold;
+}

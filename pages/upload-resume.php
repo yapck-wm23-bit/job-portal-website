@@ -12,6 +12,27 @@ $maximumFileSize = 5 * 1024 * 1024;
 
 $selectedJobSeekerId = 0;
 
+function getResumeUrl(?string $resumePath): ?string
+{
+    if (empty($resumePath)) {
+        return null;
+    }
+
+    $fileName = basename($resumePath);
+
+    $absolutePath =
+        __DIR__
+        . "/../uploads/resumes/"
+        . $fileName;
+
+    if (!is_file($absolutePath)) {
+        return null;
+    }
+
+    return "../uploads/resumes/"
+        . rawurlencode($fileName);
+}
+
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $selectedJobSeekerId = (int) filter_input(
         INPUT_POST,
@@ -39,9 +60,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $jobSeekerQuery = $conn->prepare(
             "SELECT
                 job_seeker_id,
-                full_name
-             FROM job_seekers
-             WHERE job_seeker_id = ?"
+                full_name,
+                resume_path
+            FROM job_seekers
+            WHERE job_seeker_id = ?"
         );
 
         $jobSeekerQuery->bind_param(
@@ -234,9 +256,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                         $updateQuery->execute();
                                         $updateQuery->close();
 
+                                        // Delete the previous résumé only after the
+                                        // new file and database record are successful
+                                        $previousResume =
+                                            $selectedJobSeeker["resume_path"] ?? null;
+
+                                        if (!empty($previousResume)) {
+
+                                            $previousFileName = basename(
+                                                $previousResume
+                                            );
+
+                                            $previousFilePath =
+                                                $uploadDirectory
+                                                . $previousFileName;
+
+                                            if (
+                                                $previousFileName !== $newFileName &&
+                                                is_file($previousFilePath)
+                                            ) {
+                                                unlink($previousFilePath);
+                                            }
+                                        }
+
+                                        $selectedJobSeeker["resume_path"] =
+                                            $newFileName;
+
                                         $success =
-                                            "Résumé uploaded "
-                                            . "successfully.";
+                                            empty($previousResume)
+                                                ? "Résumé uploaded successfully."
+                                                : "Résumé replaced successfully.";
 
                                     } catch (
                                         mysqli_sql_exception $exception
@@ -282,6 +331,27 @@ if ($jobSeekerResult) {
     while ($row = $jobSeekerResult->fetch_assoc()) {
         $jobSeekers[] = $row;
     }
+}
+
+$selectedProfile = null;
+
+foreach ($jobSeekers as $jobSeeker) {
+
+    if (
+        (int) $jobSeeker["job_seeker_id"] ===
+        $selectedJobSeekerId
+    ) {
+        $selectedProfile = $jobSeeker;
+        break;
+    }
+}
+
+$currentResumeUrl = null;
+
+if ($selectedProfile !== null) {
+    $currentResumeUrl = getResumeUrl(
+        $selectedProfile["resume_path"] ?? null
+    );
 }
 
 ?>
@@ -357,6 +427,13 @@ if ($jobSeekerResult) {
                         id="job_seeker_id"
                         name="job_seeker_id"
                         required
+                        onchange="
+                            if (this.value !== '') {
+                                window.location.href =
+                                    'upload-resume.php?job_seeker_id='
+                                    + encodeURIComponent(this.value);
+                            }
+                        "
                     >
 
                         <option value="">
@@ -386,6 +463,66 @@ if ($jobSeekerResult) {
                     </select>
 
                 </div>
+
+                <?php if ($selectedProfile !== null): ?>
+
+                <div class="current-resume-panel">
+
+                    <h2>Current Résumé</h2>
+
+                    <?php if ($currentResumeUrl !== null): ?>
+
+                        <p>
+                            A résumé has already been uploaded for
+                            <?= htmlspecialchars(
+                                $selectedProfile["full_name"]
+                            ) ?>.
+                        </p>
+
+                        <div class="resume-actions">
+
+                            <a
+                                href="<?= htmlspecialchars(
+                                    $currentResumeUrl,
+                                    ENT_QUOTES,
+                                    "UTF-8"
+                                ) ?>"
+                                class="resume-button"
+                                target="_blank"
+                                rel="noopener"
+                            >
+                                View Résumé
+                            </a>
+
+                            <a
+                                href="<?= htmlspecialchars(
+                                    $currentResumeUrl,
+                                    ENT_QUOTES,
+                                    "UTF-8"
+                                ) ?>"
+                                class="resume-button secondary-button"
+                                download
+                            >
+                                Download Résumé
+                            </a>
+
+                        </div>
+
+                        <p class="replacement-warning">
+                            Uploading another PDF will replace this résumé.
+                        </p>
+
+                    <?php else: ?>
+
+                        <p>
+                            No résumé has been uploaded for this profile.
+                        </p>
+
+                    <?php endif; ?>
+
+                </div>
+
+            <?php endif; ?>
 
                 <div class="form-group">
 
@@ -427,7 +564,9 @@ if ($jobSeekerResult) {
                     type="submit"
                     class="register-button"
                 >
-                    Upload Résumé
+                    <?= $currentResumeUrl !== null
+                        ? "Replace Résumé"
+                        : "Upload Résumé" ?>
                 </button>
 
             </form>

@@ -1,15 +1,274 @@
 <?php
 
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
 require_once __DIR__ . "/../config/database.php";
 
 $jobSeekers = [];
-$selectedJobSeekerId = filter_input(
-    INPUT_GET,
-    "job_seeker_id",
-    FILTER_VALIDATE_INT
-);
+$error = "";
+$success = "";
 
-// Retrieve Job Seeker profiles for demonstration
+$maximumFileSize = 5 * 1024 * 1024;
+
+$selectedJobSeekerId = 0;
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $selectedJobSeekerId = (int) filter_input(
+        INPUT_POST,
+        "job_seeker_id",
+        FILTER_VALIDATE_INT
+    );
+} else {
+    $selectedJobSeekerId = (int) filter_input(
+        INPUT_GET,
+        "job_seeker_id",
+        FILTER_VALIDATE_INT
+    );
+}
+
+// Process résumé upload
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+    if ($selectedJobSeekerId <= 0) {
+
+        $error = "Please select a valid Job Seeker profile.";
+
+    } else {
+
+        // Confirm that the Job Seeker exists
+        $jobSeekerQuery = $conn->prepare(
+            "SELECT
+                job_seeker_id,
+                full_name
+             FROM job_seekers
+             WHERE job_seeker_id = ?"
+        );
+
+        $jobSeekerQuery->bind_param(
+            "i",
+            $selectedJobSeekerId
+        );
+
+        $jobSeekerQuery->execute();
+
+        $jobSeekerResult = $jobSeekerQuery->get_result();
+        $selectedJobSeeker = $jobSeekerResult->fetch_assoc();
+
+        $jobSeekerQuery->close();
+
+        if (!$selectedJobSeeker) {
+
+            $error = "The selected Job Seeker profile was not found.";
+
+        } elseif (
+            !isset($_FILES["resume"]) ||
+            !is_array($_FILES["resume"])
+        ) {
+
+            $error = "Please select a résumé file.";
+
+        } else {
+
+            $uploadedFile = $_FILES["resume"];
+            $uploadError = $uploadedFile["error"];
+
+            if ($uploadError === UPLOAD_ERR_NO_FILE) {
+
+                $error = "Please select a résumé file.";
+
+            } elseif ($uploadError === UPLOAD_ERR_INI_SIZE) {
+
+                $error = "The résumé exceeds the server upload limit.";
+
+            } elseif ($uploadError === UPLOAD_ERR_FORM_SIZE) {
+
+                $error = "The résumé file is too large.";
+
+            } elseif ($uploadError !== UPLOAD_ERR_OK) {
+
+                $error = "The résumé could not be uploaded.";
+
+            } elseif ($uploadedFile["size"] <= 0) {
+
+                $error = "The selected résumé file is empty.";
+
+            } elseif ($uploadedFile["size"] > $maximumFileSize) {
+
+                $error = "The résumé must not exceed 5 MB.";
+
+            } elseif (
+                !is_uploaded_file(
+                    $uploadedFile["tmp_name"]
+                )
+            ) {
+
+                $error = "The uploaded résumé file is invalid.";
+
+            } else {
+
+                $originalFileName = $uploadedFile["name"];
+
+                $fileExtension = strtolower(
+                    pathinfo(
+                        $originalFileName,
+                        PATHINFO_EXTENSION
+                    )
+                );
+
+                $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+
+                $mimeType = $fileInfo->file(
+                    $uploadedFile["tmp_name"]
+                );
+
+                $allowedMimeTypes = [
+                    "application/pdf",
+                    "application/x-pdf"
+                ];
+
+                if ($fileExtension !== "pdf") {
+
+                    $error = "Only PDF résumé files are allowed.";
+
+                } elseif (
+                    !in_array(
+                        $mimeType,
+                        $allowedMimeTypes,
+                        true
+                    )
+                ) {
+
+                    $error = "The selected file is not a valid PDF.";
+
+                } else {
+
+                    // Check the PDF file signature
+                    $fileHandle = fopen(
+                        $uploadedFile["tmp_name"],
+                        "rb"
+                    );
+
+                    $fileSignature = "";
+
+                    if ($fileHandle !== false) {
+                        $fileSignature = fread($fileHandle, 5);
+                        fclose($fileHandle);
+                    }
+
+                    if ($fileSignature !== "%PDF-") {
+
+                        $error = "The selected file is not a valid PDF.";
+
+                    } else {
+
+                        $uploadDirectory =
+                            __DIR__ . "/../uploads/resumes/";
+
+                        if (!is_dir($uploadDirectory)) {
+
+                            $directoryCreated = mkdir(
+                                $uploadDirectory,
+                                0755,
+                                true
+                            );
+
+                            if (!$directoryCreated) {
+                                $error =
+                                    "The résumé upload folder "
+                                    . "could not be created.";
+                            }
+                        }
+
+                        if (
+                            $error === "" &&
+                            !is_writable($uploadDirectory)
+                        ) {
+
+                            $error =
+                                "The résumé upload folder is "
+                                . "not writable.";
+                        }
+
+                        if ($error === "") {
+
+                            try {
+
+                                $newFileName =
+                                    "resume_"
+                                    . $selectedJobSeekerId
+                                    . "_"
+                                    . bin2hex(random_bytes(8))
+                                    . ".pdf";
+
+                                $destinationPath =
+                                    $uploadDirectory
+                                    . $newFileName;
+
+                                $fileMoved = move_uploaded_file(
+                                    $uploadedFile["tmp_name"],
+                                    $destinationPath
+                                );
+
+                                if (!$fileMoved) {
+
+                                    $error =
+                                        "The résumé file could not "
+                                        . "be saved.";
+
+                                } else {
+
+                                    try {
+
+                                        $updateQuery = $conn->prepare(
+                                            "UPDATE job_seekers
+                                             SET resume_path = ?
+                                             WHERE job_seeker_id = ?"
+                                        );
+
+                                        $updateQuery->bind_param(
+                                            "si",
+                                            $newFileName,
+                                            $selectedJobSeekerId
+                                        );
+
+                                        $updateQuery->execute();
+                                        $updateQuery->close();
+
+                                        $success =
+                                            "Résumé uploaded "
+                                            . "successfully.";
+
+                                    } catch (
+                                        mysqli_sql_exception $exception
+                                    ) {
+
+                                        // Remove the uploaded file when
+                                        // the database update fails
+                                        if (is_file($destinationPath)) {
+                                            unlink($destinationPath);
+                                        }
+
+                                        $error =
+                                            "The résumé information "
+                                            . "could not be saved.";
+                                    }
+                                }
+
+                            } catch (Exception $exception) {
+
+                                $error =
+                                    "A secure résumé filename "
+                                    . "could not be generated.";
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Retrieve Job Seeker profiles
 $jobSeekerResult = $conn->query(
     "SELECT
         job_seeker_id,
@@ -62,6 +321,22 @@ if ($jobSeekerResult) {
             Upload a PDF version of your résumé so that Employers
             can view and download it.
         </p>
+
+        <?php if ($success !== ""): ?>
+
+            <div class="success-message">
+                <?= htmlspecialchars($success) ?>
+            </div>
+
+        <?php endif; ?>
+
+        <?php if ($error !== ""): ?>
+
+            <div class="error-message">
+                <?= htmlspecialchars($error) ?>
+            </div>
+
+        <?php endif; ?>
 
         <?php if (count($jobSeekers) > 0): ?>
 
@@ -141,8 +416,8 @@ if ($jobSeekerResult) {
                         <li>The résumé must be in PDF format.</li>
                         <li>The file must not exceed 5 MB.</li>
                         <li>
-                            Uploading a new résumé will replace the
-                            existing résumé.
+                            The file will be saved using a secure,
+                            unique filename.
                         </li>
                     </ul>
 
@@ -151,15 +426,9 @@ if ($jobSeekerResult) {
                 <button
                     type="submit"
                     class="register-button"
-                    disabled
                 >
                     Upload Résumé
                 </button>
-
-                <p class="development-note">
-                    Résumé upload processing will be enabled after
-                    PDF validation is implemented.
-                </p>
 
             </form>
 

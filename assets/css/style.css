@@ -180,3 +180,121 @@ h1 {
 .apply-button:hover {
     background: #1d4ed8;
 }
+
+/* Employer applicant page */
+.applicants-container {
+    width: 90%;
+    max-width: 1000px;
+    margin: 40px auto;
+}
+
+.applicant-filter-form {
+    background: white;
+    padding: 25px;
+    margin: 25px 0;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.applicant-placeholder {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+/* Applicant results */
+.applicant-list {
+    margin-top: 30px;
+}
+
+.applicant-card {
+    background: white;
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.applicant-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.applicant-card p {
+    line-height: 1.5;
+}
+
+/* Applicant summary */
+.applicant-count {
+    margin-bottom: 20px;
+    color: #555;
+    font-weight: bold;
+}
+
+/* Application status badge */
+.status-badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.status-pending {
+    background: #fff4cc;
+    color: #7a5d00;
+}
+
+.status-shortlisted {
+    background: #e5ffe8;
+    color: #176b23;
+}
+
+.status-rejected {
+    background: #ffe5e5;
+    color: #a10000;
+}
+
+/* Applicant resume section */
+.resume-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+.resume-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.resume-button {
+    display: inline-block;
+    padding: 9px 16px;
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.resume-button:hover {
+    background: #1d4ed8;
+}
+
+.secondary-button {
+    background: #4b5563;
+}
+
+.secondary-button:hover {
+    background: #374151;
+}
+
+.resume-unavailable {
+    display: block;
+    margin-top: 8px;
+    color: #666;
+    font-style: italic;
+}

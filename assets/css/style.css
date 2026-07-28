@@ -165,3 +165,18 @@ h1 {
         width: 100%;
     }
 }
+
+.apply-button {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 11px 20px;
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.apply-button:hover {
+    background: #1d4ed8;
+}

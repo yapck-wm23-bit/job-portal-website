@@ -280,6 +280,13 @@ if ($keyword !== "") {
                             </small>
                         </p>
 
+                        <a
+                            href="apply-job.php?job_id=<?php echo (int) $job["job_id"]; ?>"
+                            class="apply-button"
+                        >
+                            Apply Now
+                        </a>
+
                     </div>
 
                 <?php endwhile; ?>

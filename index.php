@@ -185,6 +185,21 @@ declare(strict_types=1);
             </a>
 
         </div>
+
+        <div class="feature-card">
+
+            <h3>Upload Résumé</h3>
+
+            <p>
+                Job Seekers can upload or replace a PDF résumé
+                for Employers to view.
+            </p>
+
+            <a href="pages/upload-resume.php">
+                Upload Résumé
+            </a>
+
+        </div>
     </section>
 
     <footer>

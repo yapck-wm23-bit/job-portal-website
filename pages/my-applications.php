@@ -3,6 +3,8 @@
 require_once __DIR__ . "/../config/database.php";
 
 $jobSeekers = [];
+$applications = [];
+$error = "";
 
 $selectedJobSeekerId = filter_input(
     INPUT_GET,
@@ -10,7 +12,7 @@ $selectedJobSeekerId = filter_input(
     FILTER_VALIDATE_INT
 );
 
-// Retrieve Job Seeker profiles for demonstration
+// Retrieve Job Seeker profiles
 $jobSeekerResult = $conn->query(
     "SELECT
         job_seeker_id,
@@ -22,6 +24,72 @@ $jobSeekerResult = $conn->query(
 if ($jobSeekerResult) {
     while ($row = $jobSeekerResult->fetch_assoc()) {
         $jobSeekers[] = $row;
+    }
+}
+
+// Retrieve applications belonging to the selected Job Seeker
+if ($selectedJobSeekerId) {
+
+    // Confirm that the Job Seeker exists
+    $jobSeekerQuery = $conn->prepare(
+        "SELECT
+            job_seeker_id,
+            full_name
+         FROM job_seekers
+         WHERE job_seeker_id = ?"
+    );
+
+    $jobSeekerQuery->bind_param(
+        "i",
+        $selectedJobSeekerId
+    );
+
+    $jobSeekerQuery->execute();
+
+    $selectedResult = $jobSeekerQuery->get_result();
+    $selectedJobSeeker = $selectedResult->fetch_assoc();
+
+    $jobSeekerQuery->close();
+
+    if (!$selectedJobSeeker) {
+
+        $error = "Job Seeker profile not found.";
+
+    } else {
+
+        $applicationQuery = $conn->prepare(
+            "SELECT
+                applications.application_id,
+                applications.applied_at,
+                jobs.job_id,
+                jobs.job_title,
+                jobs.location,
+                jobs.job_type,
+                employers.company_name
+             FROM applications
+             INNER JOIN jobs
+                ON applications.job_id = jobs.job_id
+             INNER JOIN employers
+                ON jobs.employer_id = employers.employer_id
+             WHERE applications.job_seeker_id = ?
+             ORDER BY applications.applied_at DESC"
+        );
+
+        $applicationQuery->bind_param(
+            "i",
+            $selectedJobSeekerId
+        );
+
+        $applicationQuery->execute();
+
+        $applicationResult =
+            $applicationQuery->get_result();
+
+        while ($row = $applicationResult->fetch_assoc()) {
+            $applications[] = $row;
+        }
+
+        $applicationQuery->close();
     }
 }
 
@@ -61,6 +129,14 @@ if ($jobSeekerResult) {
         <p>
             View the jobs that you have previously applied for.
         </p>
+
+        <?php if ($error !== ""): ?>
+
+        <div class="error-message">
+            <?= htmlspecialchars($error) ?>
+        </div>
+
+        <?php endif; ?>
 
         <?php if (count($jobSeekers) > 0): ?>
 
@@ -132,20 +208,83 @@ if ($jobSeekerResult) {
         <?php endif; ?>
 
 
-        <?php if ($selectedJobSeekerId): ?>
+        <?php if (
+            $selectedJobSeekerId &&
+            $error === ""
+        ): ?>
 
-            <div class="application-placeholder">
+    <section class="submitted-applications">
 
-                <h2>Submitted Applications</h2>
+        <h2>Submitted Applications</h2>
+
+        <?php if (count($applications) > 0): ?>
+
+            <?php foreach ($applications as $application): ?>
+
+                <article class="my-application-card">
+
+                    <h3>
+                        <?= htmlspecialchars(
+                            $application["job_title"]
+                        ) ?>
+                    </h3>
+
+                    <p>
+                        <strong>Company:</strong>
+
+                        <?= htmlspecialchars(
+                            $application["company_name"]
+                        ) ?>
+                    </p>
+
+                    <p>
+                        <strong>Location:</strong>
+
+                        <?= htmlspecialchars(
+                            !empty($application["location"])
+                                ? $application["location"]
+                                : "Not specified"
+                        ) ?>
+                    </p>
+
+                    <p>
+                        <strong>Job Type:</strong>
+
+                        <?= htmlspecialchars(
+                            $application["job_type"]
+                        ) ?>
+                    </p>
+
+                    <p>
+                        <strong>Applied On:</strong>
+
+                        <?= date(
+                            "d M Y, h:i A",
+                            strtotime(
+                                $application["applied_at"]
+                            )
+                        ) ?>
+                    </p>
+
+                </article>
+
+            <?php endforeach; ?>
+
+        <?php else: ?>
+
+            <div class="no-results">
 
                 <p>
-                    Your submitted applications will be displayed
-                    here after database retrieval is implemented.
+                    No submitted applications were found.
                 </p>
 
             </div>
 
         <?php endif; ?>
+
+    </section>
+
+<?php endif; ?>
 
     </div>
 

@@ -440,3 +440,25 @@ h1 {
     border-radius: 8px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
 }
+
+/* Submitted job applications */
+.submitted-applications {
+    margin-top: 30px;
+}
+
+.my-application-card {
+    background: white;
+    padding: 25px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.my-application-card h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.my-application-card p {
+    line-height: 1.5;
+}

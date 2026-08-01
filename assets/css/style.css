@@ -376,3 +376,44 @@ h1 {
     font-size: 14px;
     font-weight: bold;
 }
+
+/* Application status update page */
+.status-update-container {
+    width: 90%;
+    max-width: 700px;
+    margin: 40px auto;
+}
+
+.application-summary {
+    background: white;
+    padding: 20px;
+    margin: 25px 0;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.status-update-form {
+    background: white;
+    padding: 25px;
+    margin-top: 20px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.status-action {
+    margin-top: 20px;
+}
+
+.status-update-button {
+    display: inline-block;
+    padding: 10px 18px;
+    background: #2563eb;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.status-update-button:hover {
+    background: #1d4ed8;
+}

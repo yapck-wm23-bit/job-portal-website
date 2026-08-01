@@ -417,3 +417,26 @@ h1 {
 .status-update-button:hover {
     background: #1d4ed8;
 }
+
+/* My Applications page */
+.my-applications-container {
+    width: 90%;
+    max-width: 900px;
+    margin: 40px auto;
+}
+
+.application-filter-form {
+    background: white;
+    padding: 25px;
+    margin: 25px 0;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.application-placeholder {
+    background: white;
+    padding: 25px;
+    margin-top: 25px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}

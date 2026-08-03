@@ -153,10 +153,15 @@ if (
 
         try {
 
+            // Start transaction so the status update and
+            // notification are completed together
+            $conn->begin_transaction();
+
+            // Update application status
             $updateQuery = $conn->prepare(
                 "UPDATE applications
-                 SET status = ?
-                 WHERE application_id = ?"
+                SET status = ?
+                WHERE application_id = ?"
             );
 
             $updateQuery->bind_param(
@@ -167,21 +172,64 @@ if (
 
             $updateQuery->execute();
 
-            if ($updateQuery->affected_rows === 1) {
+            if ($updateQuery->affected_rows !== 1) {
 
-                $success =
-                    "Application status updated successfully.";
+                $updateQuery->close();
 
-            } else {
-
-                $error =
-                    "The application status could not be updated.";
+                throw new mysqli_sql_exception(
+                    "Application status update failed."
+                );
             }
 
             $updateQuery->close();
 
-            // Reload application information
-            // to display the latest status
+
+            // Prepare notification information
+            $jobSeekerId = (int)
+                $application["job_seeker_id"];
+
+            $jobTitle =
+                $application["job_title"];
+
+            $notificationMessage =
+                "Your application for "
+                . $jobTitle
+                . " has been changed to "
+                . $newStatus
+                . ".";
+
+
+            // Create notification
+            $notificationQuery = $conn->prepare(
+                "INSERT INTO notifications
+                (
+                    job_seeker_id,
+                    application_id,
+                    message
+                )
+                VALUES (?, ?, ?)"
+            );
+
+            $notificationQuery->bind_param(
+                "iis",
+                $jobSeekerId,
+                $applicationId,
+                $notificationMessage
+            );
+
+            $notificationQuery->execute();
+            $notificationQuery->close();
+
+
+            // Both operations succeeded
+            $conn->commit();
+
+            $success =
+                "Application status updated successfully.";
+
+
+            // Reload application information so the
+            // latest status is displayed
             $application = getApplication(
                 $conn,
                 (int) $applicationId
@@ -190,6 +238,10 @@ if (
         } catch (
             mysqli_sql_exception $exception
         ) {
+
+            // Undo the status update when notification
+            // creation fails
+            $conn->rollback();
 
             $error =
                 "The application status could not be updated.";

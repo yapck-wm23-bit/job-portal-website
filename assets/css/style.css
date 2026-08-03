@@ -485,3 +485,26 @@ h1 {
 .no-results h3 {
     margin-top: 0;
 }
+
+/* Notifications page */
+.notifications-container {
+    width: 90%;
+    max-width: 850px;
+    margin: 40px auto;
+}
+
+.notification-filter-form {
+    background: white;
+    padding: 25px;
+    margin: 25px 0;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.notification-placeholder {
+    background: white;
+    padding: 25px;
+    margin-top: 25px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}

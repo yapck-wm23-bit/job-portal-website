@@ -1,22 +1,43 @@
 <?php
 
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
 require_once __DIR__ . "/../config/database.php";
 
 $application = null;
 $error = "";
+$success = "";
 
-$applicationId = filter_input(
-    INPUT_GET,
-    "application_id",
-    FILTER_VALIDATE_INT
-);
+$allowedStatuses = [
+    "Pending",
+    "Shortlisted",
+    "Rejected"
+];
 
-// Retrieve selected application
-if (!$applicationId) {
+// Get application ID from POST or GET
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    $error = "Invalid application selection.";
+    $applicationId = filter_input(
+        INPUT_POST,
+        "application_id",
+        FILTER_VALIDATE_INT
+    );
 
 } else {
+
+    $applicationId = filter_input(
+        INPUT_GET,
+        "application_id",
+        FILTER_VALIDATE_INT
+    );
+}
+
+
+// Function to retrieve application information
+function getApplication(
+    mysqli $conn,
+    int $applicationId
+): ?array {
 
     $applicationQuery = $conn->prepare(
         "SELECT
@@ -57,8 +78,102 @@ if (!$applicationId) {
 
     $applicationQuery->close();
 
-    if (!$application) {
+    return $application ?: null;
+}
+
+
+// Validate application ID
+if (!$applicationId) {
+
+    $error = "Invalid application selection.";
+
+} else {
+
+    $application = getApplication(
+        $conn,
+        (int) $applicationId
+    );
+
+    if ($application === null) {
         $error = "Application not found.";
+    }
+}
+
+
+// Process status update
+if (
+    $_SERVER["REQUEST_METHOD"] === "POST" &&
+    $application !== null
+) {
+
+    $newStatus = trim(
+        $_POST["status"] ?? ""
+    );
+
+    // Validate selected status
+    if (
+        !in_array(
+            $newStatus,
+            $allowedStatuses,
+            true
+        )
+    ) {
+
+        $error =
+            "Please select a valid application status.";
+
+    } elseif (
+        $newStatus === $application["status"]
+    ) {
+
+        $error =
+            "The selected status is already the current status.";
+
+    } else {
+
+        try {
+
+            $updateQuery = $conn->prepare(
+                "UPDATE applications
+                 SET status = ?
+                 WHERE application_id = ?"
+            );
+
+            $updateQuery->bind_param(
+                "si",
+                $newStatus,
+                $applicationId
+            );
+
+            $updateQuery->execute();
+
+            if ($updateQuery->affected_rows === 1) {
+
+                $success =
+                    "Application status updated successfully.";
+
+            } else {
+
+                $error =
+                    "The application status could not be updated.";
+            }
+
+            $updateQuery->close();
+
+            // Reload application information
+            // to display the latest status
+            $application = getApplication(
+                $conn,
+                (int) $applicationId
+            );
+
+        } catch (
+            mysqli_sql_exception $exception
+        ) {
+
+            $error =
+                "The application status could not be updated.";
+        }
     }
 }
 
@@ -99,6 +214,18 @@ if (!$applicationId) {
             Review the application information and select
             a new recruitment status.
         </p>
+
+
+        <?php if ($success !== ""): ?>
+
+            <div class="success-message">
+
+                <?= htmlspecialchars($success) ?>
+
+            </div>
+
+        <?php endif; ?>
+
 
         <?php if ($error !== ""): ?>
 
@@ -155,12 +282,20 @@ if (!$applicationId) {
                 <p>
                     <strong>Current Status:</strong>
 
+                    <?php
+                    $statusClass = strtolower(
+                        preg_replace(
+                            "/[^a-zA-Z]/",
+                            "",
+                            $application["status"]
+                        )
+                    );
+                    ?>
+
                     <span
                         class="status-badge status-<?=
-                            strtolower(
-                                htmlspecialchars(
-                                    $application["status"]
-                                )
+                            htmlspecialchars(
+                                $statusClass
                             )
                         ?>"
                     >
@@ -246,18 +381,13 @@ if (!$applicationId) {
 
                 </div>
 
+
                 <button
                     type="submit"
                     class="register-button"
-                    disabled
                 >
                     Update Status
                 </button>
-
-                <p class="development-note">
-                    Status updating will be enabled after
-                    database update processing is implemented.
-                </p>
 
             </form>
 

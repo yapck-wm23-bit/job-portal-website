@@ -516,6 +516,8 @@ if ($selectedEmployerId && $selectedJobId) {
                             <a
                                 href="update-status.php?application_id=<?=
                                     (int) $applicant["application_id"]
+                                ?>&employer_id=<?=
+                                    (int) $selectedEmployerId
                                 ?>"
                                 class="status-update-button"
                             >

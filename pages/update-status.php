@@ -3,16 +3,11 @@
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../includes/application_status.php";
 
 $application = null;
 $error = "";
 $success = "";
-
-$allowedStatuses = [
-    "Pending",
-    "Shortlisted",
-    "Rejected"
-];
 
 // Get application ID from POST or GET
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -23,11 +18,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         FILTER_VALIDATE_INT
     );
 
+    $employerId = filter_input(
+        INPUT_POST,
+        "employer_id",
+        FILTER_VALIDATE_INT
+    );
+
 } else {
 
     $applicationId = filter_input(
         INPUT_GET,
         "application_id",
+        FILTER_VALIDATE_INT
+    );
+
+    $employerId = filter_input(
+        INPUT_GET,
+        "employer_id",
         FILTER_VALIDATE_INT
     );
 }
@@ -87,6 +94,10 @@ if (!$applicationId) {
 
     $error = "Invalid application selection.";
 
+} elseif (!$employerId) {
+
+    $error = "Invalid Employer selection.";
+
 } else {
 
     $application = getApplication(
@@ -95,7 +106,19 @@ if (!$applicationId) {
     );
 
     if ($application === null) {
+
         $error = "Application not found.";
+
+    } elseif (
+        (int) $application["employer_id"] !==
+        (int) $employerId
+    ) {
+
+        $error =
+            "The selected application does not belong "
+            . "to this Employer.";
+
+        $application = null;
     }
 }
 
@@ -111,19 +134,16 @@ if (
     );
 
     // Validate selected status
-    if (
-        !in_array(
-            $newStatus,
-            $allowedStatuses,
-            true
-        )
-    ) {
+    if (!isValidApplicationStatus($newStatus)) {
 
-        $error =
-            "Please select a valid application status.";
+    $error =
+        "Please select a valid application status.";
 
     } elseif (
-        $newStatus === $application["status"]
+        !canChangeApplicationStatus(
+            $application["status"],
+            $newStatus
+        )
     ) {
 
         $error =
@@ -323,6 +343,11 @@ if (
                             "application_id"
                         ]
                     ?>"
+                >
+                <input
+                    type="hidden"
+                    name="employer_id"
+                    value="<?= (int) $employerId ?>"
                 >
 
                 <div class="form-group">

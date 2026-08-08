@@ -5,6 +5,7 @@ require_once __DIR__ . "/../config/database.php";
 $jobSeekers = [];
 $applications = [];
 $error = "";
+$selectedJobSeekerName = "";
 
 $selectedJobSeekerId = filter_input(
     INPUT_GET,
@@ -53,9 +54,12 @@ if ($selectedJobSeekerId) {
 
     if (!$selectedJobSeeker) {
 
-        $error = "Job Seeker profile not found.";
+        $error = "The selected Job Seeker profile was not found.";
 
     } else {
+
+        $selectedJobSeekerName =
+            $selectedJobSeeker["full_name"];
 
         $applicationQuery = $conn->prepare(
             "SELECT
@@ -215,19 +219,56 @@ if ($selectedJobSeekerId) {
 
     <section class="submitted-applications">
 
-        <h2>Submitted Applications</h2>
+        <h2>
+            Submitted Applications
+        </h2>
+
+        <p class="application-owner">
+            Job Seeker:
+            <strong>
+                <?= htmlspecialchars(
+                    $selectedJobSeekerName
+                ) ?>
+            </strong>
+        </p>
+
+        <p class="application-count">
+
+            <?php if (count($applications) === 1): ?>
+
+                1 submitted application found.
+
+            <?php else: ?>
+
+                <?= count($applications) ?>
+                submitted applications found.
+
+            <?php endif; ?>
+
+        </p>
 
         <?php if (count($applications) > 0): ?>
 
-            <?php foreach ($applications as $application): ?>
+            <?php foreach (
+                $applications as $index => $application
+            ): ?>
 
                 <article class="my-application-card">
+
+                <p class="application-number">
+                    Application #<?= $index + 1 ?>
+                </p>
 
                     <h3>
                         <?= htmlspecialchars(
                             $application["job_title"]
                         ) ?>
                     </h3>
+
+                    <p>
+                        <strong>Application ID:</strong>
+                        <?= (int) $application["application_id"] ?>
+                    </p>
 
                     <p>
                         <strong>Company:</strong>
@@ -274,9 +315,19 @@ if ($selectedJobSeekerId) {
 
             <div class="no-results">
 
+                <h3>No Applications Yet</h3>
+
                 <p>
-                    No submitted applications were found.
+                    This Job Seeker has not submitted any
+                    job applications.
                 </p>
+
+                <a
+                    href="job-search.php"
+                    class="apply-button"
+                >
+                    Search Jobs
+                </a>
 
             </div>
 

@@ -462,3 +462,26 @@ h1 {
 .my-application-card p {
     line-height: 1.5;
 }
+
+/* My Applications details */
+.application-owner {
+    margin-bottom: 5px;
+}
+
+.application-count {
+    margin-top: 5px;
+    margin-bottom: 20px;
+    color: #555;
+    font-weight: bold;
+}
+
+.application-number {
+    margin-bottom: 5px;
+    color: #666;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.no-results h3 {
+    margin-top: 0;
+}

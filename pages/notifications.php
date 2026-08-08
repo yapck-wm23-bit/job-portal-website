@@ -3,6 +3,9 @@
 require_once __DIR__ . "/../config/database.php";
 
 $jobSeekers = [];
+$notifications = [];
+$error = "";
+$selectedJobSeekerName = "";
 
 $selectedJobSeekerId = filter_input(
     INPUT_GET,
@@ -10,7 +13,7 @@ $selectedJobSeekerId = filter_input(
     FILTER_VALIDATE_INT
 );
 
-// Retrieve Job Seeker profiles for demonstration
+// Retrieve Job Seeker profiles
 $jobSeekerResult = $conn->query(
     "SELECT
         job_seeker_id,
@@ -22,6 +25,87 @@ $jobSeekerResult = $conn->query(
 if ($jobSeekerResult) {
     while ($row = $jobSeekerResult->fetch_assoc()) {
         $jobSeekers[] = $row;
+    }
+}
+
+// Retrieve notifications for selected Job Seeker
+if ($selectedJobSeekerId) {
+
+    // Confirm Job Seeker exists
+    $jobSeekerQuery = $conn->prepare(
+        "SELECT
+            job_seeker_id,
+            full_name
+         FROM job_seekers
+         WHERE job_seeker_id = ?"
+    );
+
+    $jobSeekerQuery->bind_param(
+        "i",
+        $selectedJobSeekerId
+    );
+
+    $jobSeekerQuery->execute();
+
+    $selectedResult =
+        $jobSeekerQuery->get_result();
+
+    $selectedJobSeeker =
+        $selectedResult->fetch_assoc();
+
+    $jobSeekerQuery->close();
+
+    if (!$selectedJobSeeker) {
+
+        $error =
+            "The selected Job Seeker profile was not found.";
+
+    } else {
+
+        $selectedJobSeekerName =
+            $selectedJobSeeker["full_name"];
+
+        $notificationQuery = $conn->prepare(
+            "SELECT
+                notifications.notification_id,
+                notifications.message,
+                notifications.is_read,
+                notifications.created_at,
+                applications.application_id,
+                jobs.job_id,
+                jobs.job_title,
+                employers.company_name
+             FROM notifications
+             INNER JOIN applications
+                ON notifications.application_id =
+                   applications.application_id
+             INNER JOIN jobs
+                ON applications.job_id =
+                   jobs.job_id
+             INNER JOIN employers
+                ON jobs.employer_id =
+                   employers.employer_id
+             WHERE notifications.job_seeker_id = ?
+             ORDER BY notifications.created_at DESC"
+        );
+
+        $notificationQuery->bind_param(
+            "i",
+            $selectedJobSeekerId
+        );
+
+        $notificationQuery->execute();
+
+        $notificationResult =
+            $notificationQuery->get_result();
+
+        while (
+            $row = $notificationResult->fetch_assoc()
+        ) {
+            $notifications[] = $row;
+        }
+
+        $notificationQuery->close();
     }
 }
 
@@ -62,6 +146,14 @@ if ($jobSeekerResult) {
             View notifications about changes to your
             job applications.
         </p>
+
+        <?php if ($error !== ""): ?>
+
+            <div class="error-message">
+                <?= htmlspecialchars($error) ?>
+            </div>
+
+        <?php endif; ?>
 
         <?php if (count($jobSeekers) > 0): ?>
 
@@ -135,21 +227,120 @@ if ($jobSeekerResult) {
         <?php endif; ?>
 
 
-        <?php if ($selectedJobSeekerId): ?>
+        <?php if (
+    $selectedJobSeekerId &&
+    $error === ""
+): ?>
 
-            <div class="notification-placeholder">
+    <section class="notification-list">
 
-                <h2>Application Notifications</h2>
+        <h2>Application Notifications</h2>
+
+        <p class="notification-owner">
+            Job Seeker:
+            <strong>
+                <?= htmlspecialchars(
+                    $selectedJobSeekerName
+                ) ?>
+            </strong>
+        </p>
+
+        <p class="notification-count">
+
+            <?php if (count($notifications) === 1): ?>
+
+                1 notification found.
+
+            <?php else: ?>
+
+                <?= count($notifications) ?>
+                notifications found.
+
+            <?php endif; ?>
+
+        </p>
+
+        <?php if (count($notifications) > 0): ?>
+
+            <?php foreach (
+                $notifications as $notification
+            ): ?>
+
+                <article
+                    class="notification-card <?=
+                        (int) $notification["is_read"] === 0
+                            ? "notification-unread"
+                            : "notification-read"
+                    ?>"
+                >
+
+                    <div class="notification-header">
+
+                        <h3>
+                            <?= htmlspecialchars(
+                                $notification["job_title"]
+                            ) ?>
+                        </h3>
+
+                        <?php if (
+                            (int) $notification["is_read"] === 0
+                        ): ?>
+
+                            <span class="unread-badge">
+                                New
+                            </span>
+
+                        <?php endif; ?>
+
+                    </div>
+
+                    <p>
+                        <strong>Company:</strong>
+
+                        <?= htmlspecialchars(
+                            $notification["company_name"]
+                        ) ?>
+                    </p>
+
+                    <p class="notification-message">
+                        <?= htmlspecialchars(
+                            $notification["message"]
+                        ) ?>
+                    </p>
+
+                    <p>
+                        <strong>Received:</strong>
+
+                        <?= date(
+                            "d M Y, h:i A",
+                            strtotime(
+                                $notification["created_at"]
+                            )
+                        ) ?>
+                    </p>
+
+                </article>
+
+            <?php endforeach; ?>
+
+        <?php else: ?>
+
+            <div class="no-results">
+
+                <h3>No Notifications</h3>
 
                 <p>
-                    Your application notifications will
-                    appear here after notification retrieval
-                    is implemented.
+                    There are no application status
+                    notifications for this Job Seeker.
                 </p>
 
             </div>
 
         <?php endif; ?>
+
+    </section>
+
+<?php endif; ?>
 
     </div>
 

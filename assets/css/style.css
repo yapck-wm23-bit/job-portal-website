@@ -508,3 +508,64 @@ h1 {
     border-radius: 8px;
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
 }
+
+/* Application notifications */
+.notification-list {
+    margin-top: 30px;
+}
+
+.notification-owner {
+    margin-bottom: 5px;
+}
+
+.notification-count {
+    margin-top: 5px;
+    margin-bottom: 20px;
+    color: #555;
+    font-weight: bold;
+}
+
+.notification-card {
+    background: white;
+    padding: 22px;
+    margin-bottom: 18px;
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.notification-unread {
+    border-left: 5px solid #2563eb;
+}
+
+.notification-read {
+    border-left: 5px solid #ccc;
+}
+
+.notification-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.notification-header h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.unread-badge {
+    padding: 5px 10px;
+    background: #2563eb;
+    color: white;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.notification-message {
+    margin: 15px 0;
+    padding: 12px;
+    background: #f5f7fa;
+    border-radius: 5px;
+    line-height: 1.5;
+}

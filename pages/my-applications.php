@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . "/../config/database.php";
+require_once __DIR__
+    . "/../includes/application_history.php";
 
 $jobSeekers = [];
 $applications = [];
@@ -234,20 +236,17 @@ if ($selectedJobSeekerId) {
 
         <p class="application-count">
 
-            <?php if (count($applications) === 1): ?>
-
-                1 submitted application found.
-
-            <?php else: ?>
-
-                <?= count($applications) ?>
-                submitted applications found.
-
-            <?php endif; ?>
+            <?= htmlspecialchars(
+                getApplicationCountMessage(
+                    count($applications)
+                )
+            ) ?>
 
         </p>
 
-        <?php if (count($applications) > 0): ?>
+        <?php if (
+            hasSubmittedApplications($applications)
+        ): ?>
 
             <?php foreach (
                 $applications as $index => $application

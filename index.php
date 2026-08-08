@@ -200,6 +200,21 @@ declare(strict_types=1);
             </a>
 
         </div>
+
+        <div class="feature-card">
+
+            <h3>My Applications</h3>
+
+            <p>
+                Job Seekers can review the jobs they have
+                previously applied for.
+            </p>
+
+            <a href="pages/my-applications.php">
+                View My Applications
+            </a>
+
+        </div>
     </section>
 
     <footer>

@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . "/../config/database.php";
+require_once __DIR__
+    . "/../includes/notification_helper.php";
 
 $jobSeekers = [];
 $notifications = [];
@@ -247,16 +249,11 @@ if ($selectedJobSeekerId) {
 
         <p class="notification-count">
 
-            <?php if (count($notifications) === 1): ?>
-
-                1 notification found.
-
-            <?php else: ?>
-
-                <?= count($notifications) ?>
-                notifications found.
-
-            <?php endif; ?>
+            <?= htmlspecialchars(
+                getNotificationCountMessage(
+                    count($notifications)
+                )
+            ) ?>
 
         </p>
 
@@ -268,7 +265,9 @@ if ($selectedJobSeekerId) {
 
                 <article
                     class="notification-card <?=
-                        (int) $notification["is_read"] === 0
+                        isUnreadNotification(
+                            (int) $notification["is_read"]
+                        )
                             ? "notification-unread"
                             : "notification-read"
                     ?>"
@@ -283,7 +282,9 @@ if ($selectedJobSeekerId) {
                         </h3>
 
                         <?php if (
-                            (int) $notification["is_read"] === 0
+                            isUnreadNotification(
+                                (int) $notification["is_read"]
+                            )
                         ): ?>
 
                             <span class="unread-badge">

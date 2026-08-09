@@ -4,6 +4,8 @@ mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 require_once __DIR__ . "/../config/database.php";
 require_once __DIR__ . "/../includes/application_status.php";
+require_once __DIR__
+    . "/../includes/notification_helper.php";
 
 $application = null;
 $error = "";
@@ -192,12 +194,10 @@ if (
                 $application["job_title"];
 
             $notificationMessage =
-                "Your application for "
-                . $jobTitle
-                . " has been changed to "
-                . $newStatus
-                . ".";
-
+            createApplicationStatusNotification(
+                $jobTitle,
+                $newStatus
+            );
 
             // Create notification
             $notificationQuery = $conn->prepare(

@@ -50,6 +50,13 @@ jobs:
           echo "All PHP files passed the syntax check."
 
       - name: Run automated unit tests
+        shell: bash
         run: |
-          php tests/application_status_test.php
-          php tests/application_history_test.php
+          set -e
+
+          for test in tests/*_test.php; do
+            echo "Running $test"
+            php "$test"
+          done
+
+          echo "All automated unit tests passed."

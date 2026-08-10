@@ -511,6 +511,20 @@ if ($selectedEmployerId && $selectedJobId) {
 
                                 </div>
 
+                            <div class="status-action">
+
+                            <a
+                                href="update-status.php?application_id=<?=
+                                    (int) $applicant["application_id"]
+                                ?>&employer_id=<?=
+                                    (int) $selectedEmployerId
+                                ?>"
+                                class="status-update-button"
+                            >
+                                Update Status
+                            </a>
+
+                            </div>
                         </article>
 
                     <?php endforeach; ?>

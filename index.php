@@ -215,6 +215,22 @@ declare(strict_types=1);
             </a>
 
         </div>
+
+        <div class="feature-card">
+
+            <h3>Notifications</h3>
+
+            <p>
+                Job Seekers can view notifications when
+                their application status changes.
+            </p>
+
+            <a href="pages/notifications.php">
+                View Notifications
+            </a>
+
+        </div>
+
     </section>
 
     <footer>

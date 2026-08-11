@@ -50,4 +50,6 @@ jobs:
           echo "All PHP files passed the syntax check."
 
       - name: Run automated unit tests
-        run: php tests/application_status_test.php
+        run: |
+          php tests/application_status_test.php
+          php tests/application_history_test.php
